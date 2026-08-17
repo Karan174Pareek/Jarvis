@@ -754,20 +754,19 @@ class JarvisUI(QWidget):
                 background-color: #3ed6ff;
                 border-radius: 2px;
             }
-        """)
             QListWidget::item:selected {
-                background-color: rgba(0, 212, 255, 0.15);
-                color: #00d2ff;
-                border-left: 3px solid #00d2ff;
+                background-color: rgba(62, 214, 255, 0.15);
+                color: #3ed6ff;
+                border-left: 3px solid #3ed6ff;
             }
             QSlider::groove:horizontal {
-                border: 1px solid rgba(0, 212, 255, 0.3);
+                border: 1px solid rgba(62, 214, 255, 0.3);
                 height: 6px;
-                background: rgba(11, 15, 25, 0.8);
+                background: rgba(9, 15, 17, 0.8);
                 border-radius: 3px;
             }
             QSlider::handle:horizontal {
-                background: #00d2ff;
+                background: #3ed6ff;
                 border: 1px solid #ffffff;
                 width: 14px;
                 height: 14px;
@@ -776,17 +775,17 @@ class JarvisUI(QWidget):
             }
             QScrollBar:vertical {
                 border: none;
-                background: rgba(11, 15, 25, 0.5);
+                background: rgba(9, 15, 17, 0.5);
                 width: 6px;
                 margin: 0px;
             }
             QScrollBar::handle:vertical {
-                background: rgba(0, 212, 255, 0.4);
+                background: rgba(62, 214, 255, 0.4);
                 min-height: 20px;
                 border-radius: 3px;
             }
             QScrollBar::handle:vertical:hover {
-                background: #00d2ff;
+                background: #3ed6ff;
             }
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
                 height: 0px;
