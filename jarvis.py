@@ -5,6 +5,7 @@ import json
 import threading
 import subprocess
 import requests
+import webbrowser
 from datetime import datetime
 from math import sin, cos, pi
 
@@ -1793,8 +1794,33 @@ class JarvisUI(QWidget):
         self.release_lock_screen()
         event.accept()
 
+def launch_web_hud_server(port=8000, open_browser=True):
+    try:
+        from server import run_server
+        server_thread = threading.Thread(target=run_server, args=(port,), daemon=True)
+        server_thread.start()
+        print(f"[JARVIS CORE] Stitch Mission Control HUD Web Server running on http://localhost:{port}")
+        if open_browser:
+            time.sleep(0.5)
+            webbrowser.open(f"http://localhost:{port}")
+    except Exception as e:
+        print("[JARVIS CORE] Error starting Web HUD Server:", e)
+
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = JarvisUI()
-    window.show()
-    sys.exit(app.exec())
+    port = 8000
+    if "--web" in sys.argv:
+        launch_web_hud_server(port=port, open_browser=True)
+        print("[JARVIS CORE] Web HUD Mode active. Press Ctrl+C to stop.")
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            sys.exit(0)
+    else:
+        # Start server in background thread alongside PyQt GUI
+        launch_web_hud_server(port=port, open_browser="--browser" in sys.argv)
+        app = QApplication(sys.argv)
+        window = JarvisUI()
+        window.show()
+        sys.exit(app.exec())
+
