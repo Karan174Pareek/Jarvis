@@ -1274,6 +1274,11 @@ class JarvisUI(QWidget):
             self.gauge_cpu.setValue(int(cpu))
             self.gauge_ram.setValue(int(ram))
 
+            if hasattr(self, 'lbl_hdr_cpu'):
+                self.lbl_hdr_cpu.setText(f"CPU: {int(cpu)}%")
+            if hasattr(self, 'lbl_hdr_ram'):
+                self.lbl_hdr_ram.setText(f"RAM: {int(ram)}%")
+
             # Storage status
             try:
                 disk = psutil.disk_usage('C:')
