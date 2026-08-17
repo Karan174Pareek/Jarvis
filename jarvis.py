@@ -654,90 +654,107 @@ class JarvisUI(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setMinimumSize(1280, 768)
         
-        # Cyberpunk glowing QSS stylesheet
+        # Stitch Mission Control HUD QSS stylesheet
         self.setStyleSheet("""
             QWidget { 
                 background-color: transparent; 
-                color: #e0f2fe; 
-                font-family: 'Share Tech Mono', 'Consolas', 'Courier New', monospace; 
+                color: #dde3e6; 
+                font-family: 'Manrope', 'JetBrains Mono', 'Consolas', sans-serif; 
             }
             QLabel { 
                 font-size: 13px; 
-                color: #00d2ff; 
+                color: #3ed6ff; 
             }
             QTextEdit { 
-                background-color: rgba(11, 15, 25, 0.85); 
-                border: 1px solid rgba(0, 212, 255, 0.25); 
-                border-radius: 4px; 
-                padding: 10px; 
-                color: #e0f2fe; 
+                background-color: rgba(9, 15, 17, 0.9); 
+                border: 1px solid rgba(62, 214, 255, 0.25); 
+                border-radius: 6px; 
+                padding: 12px; 
+                color: #dde3e6; 
+                font-family: 'JetBrains Mono', 'Consolas', monospace;
                 font-size: 12px; 
+                selection-background-color: rgba(62, 214, 255, 0.3);
             }
             QLineEdit { 
-                background-color: rgba(14, 19, 32, 0.85); 
-                border: 1px solid rgba(0, 212, 255, 0.3); 
+                background-color: rgba(9, 15, 17, 0.9); 
+                border: 1px solid rgba(62, 214, 255, 0.3); 
                 border-radius: 4px; 
-                padding: 8px; 
-                color: #e0f2fe; 
-                font-size: 13px; 
+                padding: 8px 12px; 
+                color: #dde3e6; 
+                font-family: 'JetBrains Mono', 'Consolas', monospace;
+                font-size: 12px; 
             }
             QLineEdit:focus {
-                border-color: #00d2ff;
-                background-color: rgba(14, 19, 32, 0.95); 
+                border-color: #3ed6ff;
+                background-color: rgba(14, 20, 23, 0.95); 
             }
             QPushButton { 
-                background-color: rgba(0, 212, 255, 0.05); 
-                border: 1px solid rgba(0, 212, 255, 0.3); 
+                background-color: rgba(62, 214, 255, 0.08); 
+                border: 1px solid rgba(62, 214, 255, 0.35); 
                 border-radius: 4px; 
-                padding: 6px 12px; 
-                color: #00d2ff; 
+                padding: 7px 14px; 
+                color: #3ed6ff; 
                 font-weight: bold; 
                 font-size: 11px;
                 text-transform: uppercase;
-                letter-spacing: 0.5px;
+                letter-spacing: 0.8px;
             }
             QPushButton:hover { 
-                background-color: rgba(0, 212, 255, 0.15); 
-                border-color: #00d2ff; 
+                background-color: rgba(62, 214, 255, 0.2); 
+                border-color: #3ed6ff; 
                 color: #ffffff;
             }
             QPushButton:pressed {
-                background-color: rgba(0, 212, 255, 0.25); 
+                background-color: rgba(62, 214, 255, 0.35); 
             }
             QPushButton.nav-btn {
-                background-color: rgba(6, 9, 20, 0.7);
-                border: 1px solid rgba(0, 212, 255, 0.2);
-                border-left: 4px solid #00d2ff;
-                border-radius: 0px;
-                padding: 12px;
-                color: #94a3b8;
+                background-color: rgba(26, 33, 35, 0.7);
+                border: 1px solid rgba(62, 214, 255, 0.2);
+                border-left: 4px solid #3ed6ff;
+                border-radius: 2px;
+                padding: 10px 14px;
+                color: #bcc9ce;
                 font-weight: bold;
                 font-size: 11px;
                 text-align: left;
                 letter-spacing: 1px;
             }
             QPushButton.nav-btn:hover {
-                background-color: rgba(0, 212, 255, 0.12);
-                border-color: #00d2ff;
+                background-color: rgba(62, 214, 255, 0.15);
+                border-color: #3ed6ff;
                 color: #ffffff;
             }
             QPushButton.nav-btn:checked {
-                background-color: rgba(0, 212, 255, 0.2);
-                border-color: #00d2ff;
-                border-left: 6px solid #FF7A00;
+                background-color: rgba(62, 214, 255, 0.25);
+                border-color: #3ed6ff;
+                border-left: 6px solid #feba39;
                 color: #ffffff;
             }
             QListWidget {
-                background-color: rgba(11, 15, 25, 0.8);
-                border: 1px solid rgba(0, 212, 255, 0.25);
-                border-radius: 4px;
-                padding: 5px;
+                background-color: rgba(9, 15, 17, 0.85);
+                border: 1px solid rgba(62, 214, 255, 0.25);
+                border-radius: 6px;
+                padding: 6px;
             }
             QListWidget::item {
                 padding: 8px;
-                border-bottom: 1px solid rgba(0,210,255,0.05);
-                color: #94a3b8;
+                border-bottom: 1px solid rgba(62, 214, 255, 0.08);
+                color: #bcc9ce;
             }
+            QProgressBar {
+                background-color: rgba(9, 15, 17, 0.9);
+                border: 1px solid rgba(62, 214, 255, 0.2);
+                border-radius: 3px;
+                text-align: center;
+                color: #dde3e6;
+                font-family: 'JetBrains Mono', monospace;
+                font-size: 10px;
+            }
+            QProgressBar::chunk {
+                background-color: #3ed6ff;
+                border-radius: 2px;
+            }
+        """)
             QListWidget::item:selected {
                 background-color: rgba(0, 212, 255, 0.15);
                 color: #00d2ff;
