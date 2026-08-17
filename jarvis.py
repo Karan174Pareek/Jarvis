@@ -798,46 +798,57 @@ class JarvisUI(QWidget):
         root_layout.setContentsMargins(0, 0, 0, 0)
         root_layout.setSpacing(0)
         
-        # 1. Custom Title Bar Layout
+        # 1. Stitch Mission Control Top Header Bar
         header_layout = QHBoxLayout()
-        header_layout.setContentsMargins(15, 10, 15, 5)
-        header_layout.setSpacing(10)
+        header_layout.setContentsMargins(15, 10, 15, 10)
+        header_layout.setSpacing(12)
         
-        # S.H.I.E.L.D logo
-        self.lbl_logo = QLabel()
-        logo_path = os.path.join(SCRATCH_DIR, "shield_logo.png")
-        if os.path.exists(logo_path):
-            self.lbl_logo.setPixmap(QPixmap(logo_path).scaled(32, 32, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
-        else:
-            self.lbl_logo.setText("🛡️")
-            self.lbl_logo.setStyleSheet("font-size: 20px;")
-        header_layout.addWidget(self.lbl_logo)
-        
-        # Title text
-        lbl_title = QLabel("IRONMAN J.A.R.V.I.S. + S.H.I.E.L.D. OS")
-        lbl_title.setStyleSheet("font-size: 14px; font-weight: bold; letter-spacing: 2px; color: #00d2ff;")
+        # Brand title & HUD version badge
+        lbl_title = QLabel("JARVIS_OS")
+        lbl_title.setStyleSheet("font-size: 18px; font-weight: 800; letter-spacing: 2px; color: #3ed6ff;")
         header_layout.addWidget(lbl_title)
+        
+        lbl_version = QLabel("v4.2 HUD")
+        lbl_version.setStyleSheet("font-size: 10px; font-weight: bold; color: #3ed6ff; background: rgba(62, 214, 255, 0.15); border: 1px solid rgba(62, 214, 255, 0.4); border-radius: 3px; padding: 2px 6px;")
+        header_layout.addWidget(lbl_version)
         
         header_layout.addStretch()
         
-        # Status
-        lbl_status = QLabel("BRIDGE CONTROL CORE // ONLINE")
-        lbl_status.setStyleSheet("font-size: 11px; color: #FF7A00; font-weight: bold; letter-spacing: 1px;")
-        header_layout.addWidget(lbl_status)
+        # Telemetry Badges
+        self.lbl_hdr_cpu = QLabel("CPU: 0%")
+        self.lbl_hdr_cpu.setStyleSheet("font-size: 11px; color: #3ed6ff; background: rgba(9, 15, 17, 0.8); border: 1px solid rgba(62, 214, 255, 0.2); border-radius: 4px; padding: 4px 8px; font-family: 'JetBrains Mono', monospace;")
+        header_layout.addWidget(self.lbl_hdr_cpu)
+        
+        self.lbl_hdr_ram = QLabel("RAM: 0%")
+        self.lbl_hdr_ram.setStyleSheet("font-size: 11px; color: #3ed6ff; background: rgba(9, 15, 17, 0.8); border: 1px solid rgba(62, 214, 255, 0.2); border-radius: 4px; padding: 4px 8px; font-family: 'JetBrains Mono', monospace;")
+        header_layout.addWidget(self.lbl_hdr_ram)
+        
+        self.lbl_hdr_latency = QLabel("LATENCY: 12ms")
+        self.lbl_hdr_latency.setStyleSheet("font-size: 11px; color: #3ed6ff; background: rgba(9, 15, 17, 0.8); border: 1px solid rgba(62, 214, 255, 0.2); border-radius: 4px; padding: 4px 8px; font-family: 'JetBrains Mono', monospace;")
+        header_layout.addWidget(self.lbl_hdr_latency)
+        
+        self.lbl_hdr_clock = QLabel("00:00:00")
+        self.lbl_hdr_clock.setStyleSheet("font-size: 11px; font-weight: bold; color: #3ed6ff; background: rgba(62, 214, 255, 0.15); border: 1px solid rgba(62, 214, 255, 0.5); border-radius: 4px; padding: 4px 10px; font-family: 'JetBrains Mono', monospace;")
+        header_layout.addWidget(self.lbl_hdr_clock)
+        
+        # Clock timer update connection
+        self.clock_timer = QTimer(self)
+        self.clock_timer.timeout.connect(lambda: self.lbl_hdr_clock.setText(datetime.now().strftime("%H:%M:%S")))
+        self.clock_timer.start(1000)
         
         header_layout.addStretch()
         
         # Minimize & Close buttons
         btn_min = QPushButton("─")
         btn_min.clicked.connect(self.showMinimized)
-        btn_min.setFixedSize(30, 22)
-        btn_min.setStyleSheet("QPushButton { border: 1px solid rgba(0, 212, 255, 0.4); color: #00d2ff; background: transparent; font-weight: bold; } QPushButton:hover { background: rgba(0, 212, 255, 0.15); }")
+        btn_min.setFixedSize(30, 24)
+        btn_min.setStyleSheet("QPushButton { border: 1px solid rgba(62, 214, 255, 0.4); color: #3ed6ff; background: transparent; font-weight: bold; } QPushButton:hover { background: rgba(62, 214, 255, 0.2); }")
         header_layout.addWidget(btn_min)
         
         btn_close = QPushButton("✕")
         btn_close.clicked.connect(self.close)
-        btn_close.setFixedSize(30, 22)
-        btn_close.setStyleSheet("QPushButton { border: 1px solid rgba(239, 68, 68, 0.4); color: #ef4444; background: transparent; font-weight: bold; } QPushButton:hover { background: rgba(239, 68, 68, 0.15); }")
+        btn_close.setFixedSize(30, 24)
+        btn_close.setStyleSheet("QPushButton { border: 1px solid rgba(255, 180, 171, 0.4); color: #ffb4ab; background: transparent; font-weight: bold; } QPushButton:hover { background: rgba(255, 180, 171, 0.2); }")
         header_layout.addWidget(btn_close)
         
         root_layout.addLayout(header_layout)
