@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>JARVIS OS - Mission Control HUD</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3ed6ff",
+                        "primary-hover": "#b3eaff",
+                        "background": "#0e1417",
+                        "surface": "#1a2123",
+                        "surface-dark": "#090f11",
+                        "surface-bright": "#252b2d",
+                        "on-surface": "#dde3e6",
+                        "on-surface-variant": "#bcc9ce",
+                        "outline": "#3c494d",
+                        "warning": "#feba39",
+                        "error": "#ffb4ab",
+                        "secondary": "#cabeff"
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(14, 20, 23, 0.6); 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3ed6ff; 
+            border-radius: 2px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #b3eaff; 
+        }
+
+        .hud-glass {
+            background: rgba(14, 20, 23, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(62, 214, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(62, 214, 255, 0.05);
+        }
+
+        .hud-glass-active {
+            border: 1px solid rgba(62, 214, 255, 0.6);
+            box-shadow: 0 0 20px rgba(62, 214, 255, 0.25), inset 0 0 20px rgba(62, 214, 255, 0.1);
+        }
+
+        .text-glow {
+            text-shadow: 0 0 10px rgba(62, 214, 255, 0.6);
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 8px #3ed6ff; }
+            50% { opacity: 0.4; transform: scale(0.85); box-shadow: 0 0 2px #3ed6ff; }
+        }
+        .status-pulse {
+            animation: pulse-dot 2s infinite ease-in-out;
+        }
+
+        .scanline {
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.15));
+            background-size: 100% 4px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen overflow-x-hidden font-display relative selection:bg-primary/30">
+
+    <!-- WebGL Background Shader Canvas -->
+    <div class="fixed inset-0 z-0 opacity-40 pointer-events-none">
+        <canvas id="shader-canvas" class="w-full h-full block"></canvas>
+    </div>
+
+    <!-- Scanline Overlay -->
+    <div class="fixed inset-0 z-0 pointer-events-none opacity-20 scanline"></div>
+
+    <!-- Top HUD Header -->
+    <header class="fixed top-0 left-0 right-0 h-16 border-b border-outline bg-background/80 backdrop-blur-md flex items-center justify-between px-6 z-50">
+        <div class="flex items-center gap-4">
+            <span class="text-2xl font-extrabold tracking-wider text-primary text-glow flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-3xl">smart_toy</span>
+                JARVIS_OS
+            </span>
+            <span class="text-xs font-mono px-2 py-0.5 border border-primary/40 text-primary bg-primary/10 rounded">v4.2 HUD</span>
+        </div>
+
+        <!-- Telemetry Header Badges -->
+        <div class="hidden md:flex items-center gap-4 font-mono text-xs text-primary">
+            <div class="hud-glass px-3 py-1.5 flex items-center gap-2">
+                <span class="text-on-surface-variant">CPU:</span>
+                <span id="header-cpu" class="text-primary font-bold text-glow">0%</span>
+            </div>
+            <div class="hud-glass px-3 py-1.5 flex items-center gap-2">
+                <span class="text-on-surface-variant">RAM:</span>
+                <span id="header-ram" class="text-primary font-bold text-glow">0%</span>
+            </div>
+            <div class="hud-glass px-3 py-1.5 flex items-center gap-2">
+                <span class="text-on-surface-variant">LATENCY:</span>
+                <span id="header-latency" class="text-primary font-bold text-glow">12ms</span>
+            </div>
+            <div class="hud-glass px-3 py-1.5 flex items-center gap-2">
+                <span class="text-on-surface-variant">SYS_TEMP:</span>
+                <span id="header-temp" class="text-primary font-bold text-glow">41°C</span>
+            </div>
+            <div class="hud-glass px-3 py-1.5 flex items-center gap-2 border-primary/50">
+                <span class="w-2 h-2 rounded-full bg-primary status-pulse"></span>
+                <span id="header-clock" class="text-primary font-bold">00:00:00</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="pt-20 pb-6 px-4 md:px-6 flex gap-6 z-10 relative min-h-screen">
+        
+        <!-- Left Side Navigation HUD -->
+        <aside class="w-64 hidden lg:flex flex-col gap-4 hud-glass p-4 rounded-lg self-start sticky top-20">
+            <div class="pb-3 border-b border-outline">
+                <h2 class="text-sm font-bold text-primary tracking-widest uppercase">System Core</h2>
+                <div class="flex items-center gap-2 mt-1 text-xs text-on-surface-variant font-mono">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 status-pulse"></span>
+                    STATUS: ONLINE
+                </div>
+            </div>
+
+            <nav class="flex flex-col gap-2 font-mono text-xs">
+                <button class="flex items-center gap-3 px-3 py-2.5 rounded bg-primary/20 text-primary border border-primary/40 font-bold">
+                    <span class="material-symbols-outlined text-sm">dashboard</span>
+                    MISSION_CONTROL
+                </button>
+                <button onclick="toggleVoice()" id="mic-toggle-btn" class="flex items-center gap-3 px-3 py-2.5 rounded text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-all border border-transparent">
+                    <span class="material-symbols-outlined text-sm" id="mic-icon">mic</span>
+                    <span id="mic-status-text">MIC_ACTIVE</span>
+                </button>
+                <button onclick="sendQuickCommand('status')" class="flex items-center gap-3 px-3 py-2.5 rounded text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-all border border-transparent">
+                    <span class="material-symbols-outlined text-sm">analytics</span>
+                    TELEMETRY_DIAG
+                </button>
+                <button onclick="sendQuickCommand('help')" class="flex items-center gap-3 px-3 py-2.5 rounded text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-all border border-transparent">
+                    <span class="material-symbols-outlined text-sm">help</span>
+                    SYSTEM_PROTOCOLS
+                </button>
+                <button onclick="sendQuickCommand('security')" class="flex items-center gap-3 px-3 py-2.5 rounded text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-all border border-transparent">
+                    <span class="material-symbols-outlined text-sm">security</span>
+                    SECURITY_SHIELD
+                </button>
+            </nav>
+
+            <div class="mt-auto pt-4 border-t border-outline flex flex-col gap-2">
+                <button onclick="sendQuickCommand('initialize')" class="w-full py-2 px-3 border border-primary/50 text-primary hover:bg-primary/20 hover:border-primary transition-all text-xs font-mono font-bold flex items-center justify-center gap-2 rounded">
+                    <span class="material-symbols-outlined text-sm">bolt</span>
+                    INIT_PROTOCOLS
+                </button>
+            </div>
+        </aside>
+
+        <!-- Central HUD Canvas & Terminal Grid -->
+        <main class="flex-1 flex flex-col gap-6">
+
+            <!-- Hero Orb Visualization & State Header -->
+            <section class="hud-glass p-6 rounded-lg flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="flex flex-col items-center md:items-start text-center md:text-left gap-2">
+                    <div class="flex items-center gap-2 text-xs font-mono text-primary uppercase tracking-widest">
+                        <span class="w-2 h-2 bg-primary rounded-full status-pulse"></span>
+                        <span id="assistant-state-label">STATE: IDLE / READY</span>
+                    </div>
+                    <h1 class="text-3xl md:text-4xl font-extrabold text-on-surface tracking-tight">
+                        <span class="text-primary text-glow">JARVIS</span> Autonomous AI Core
+                    </h1>
+                    <p class="text-sm text-on-surface-variant max-w-lg">
+                        High-density Mission Control HUD. Interfacing via WebGL telemetry canvas, natural language command parser, and local system integration.
+                    </p>
+                    
+                    <!-- Quick Preset Command Pills -->
+                    <div class="flex flex-wrap gap-2 mt-2 font-mono text-xs">
+                        <button onclick="sendQuickCommand('time')" class="px-2.5 py-1 border border-outline hover:border-primary text-on-surface-variant hover:text-primary rounded transition-all">
+                            > time
+                        </button>
+                        <button onclick="sendQuickCommand('status')" class="px-2.5 py-1 border border-outline hover:border-primary text-on-surface-variant hover:text-primary rounded transition-all">
+                            > system status
+                        </button>
+                        <button onclick="sendQuickCommand('note Check system diagnostics')" class="px-2.5 py-1 border border-outline hover:border-primary text-on-surface-variant hover:text-primary rounded transition-all">
+                            > add note
+                        </button>
+                        <button onclick="sendQuickCommand('who are you')" class="px-2.5 py-1 border border-outline hover:border-primary text-on-surface-variant hover:text-primary rounded transition-all">
+                            > identify
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Arc Reactor Interactive Orb Canvas -->
+                <div class="relative w-48 h-48 flex-shrink-0 flex items-center justify-center">
+                    <canvas id="orb-canvas" width="200" height="200" class="w-48 h-48 cursor-pointer" onclick="toggleOrbState()"></canvas>
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <span id="orb-center-icon" class="material-symbols-outlined text-primary text-2xl text-glow">graphic_eq</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Grid Layout: Terminal + Diagnostics -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <!-- Command Console Terminal (2 cols) -->
+                <section class="lg:col-span-2 hud-glass p-5 rounded-lg flex flex-col h-[480px]">
+                    <div class="flex items-center justify-between pb-3 mb-3 border-b border-outline font-mono text-xs">
+                        <div class="flex items-center gap-2 text-primary font-bold">
+                            <span class="material-symbols-outlined text-sm">terminal</span>
+                            COMMAND_CONSOLE_FEED
+                        </div>
+                        <span class="text-on-surface-variant">SESSION: SECURE_LOCAL</span>
+                    </div>
+
+                    <!-- Terminal Output Window -->
+                    <div id="terminal-feed" class="flex-1 overflow-y-auto font-mono text-xs space-y-2.5 pr-2 mb-4 select-text">
+                        <div class="text-on-surface-variant opacity-70">
+                            [00:00:00] <span class="text-primary">SYS_INIT:</span> JARVIS Autonomous System Kernel Loaded.
+                        </div>
+                        <div class="text-on-surface-variant opacity-70">
+                            [00:00:01] <span class="text-emerald-400">TELEMETRY:</span> Local HTTP REST server listening on localhost.
+                        </div>
+                        <div class="text-on-surface-variant opacity-70">
+                            [00:00:02] <span class="text-warning">SECURITY:</span> PIN authorization default active. Enter commands below.
+                        </div>
+                    </div>
+
+                    <!-- Input Form -->
+                    <form id="command-form" onsubmit="handleCommandSubmit(event)" class="flex gap-2 font-mono">
+                        <div class="flex-1 flex items-center gap-2 px-3 py-2 bg-surface-dark border border-outline focus-within:border-primary rounded transition-all">
+                            <span class="text-primary font-bold">&gt;</span>
+                            <input type="text" id="command-input" autocomplete="off" placeholder="Enter Jarvis protocol or command..." class="w-full bg-transparent text-xs text-on-surface focus:outline-none placeholder:text-on-surface-variant/50" />
+                        </div>
+                        <button type="submit" class="px-4 py-2 bg-primary text-surface-dark font-bold text-xs rounded hover:bg-primary-hover transition-all flex items-center gap-1 flex-shrink-0">
+                            <span>EXECUTE</span>
+                            <span class="material-symbols-outlined text-sm">send</span>
+                        </button>
+                    </form>
+                </section>
+
+                <!-- System Telemetry & Radar Panel (1 col) -->
+                <section class="hud-glass p-5 rounded-lg flex flex-col gap-5 justify-between">
+                    <div>
+                        <div class="flex items-center justify-between pb-3 mb-3 border-b border-outline font-mono text-xs">
+                            <div class="flex items-center gap-2 text-primary font-bold">
+                                <span class="material-symbols-outlined text-sm">memory</span>
+                                SYSTEM_METRICS
+                            </div>
+                            <span class="text-emerald-400">REALTIME</span>
+                        </div>
+
+                        <!-- Progress Gauges -->
+                        <div class="space-y-4 font-mono text-xs">
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-on-surface-variant">CPU UTILIZATION</span>
+                                    <span id="gauge-cpu-val" class="text-primary font-bold">0%</span>
+                                </div>
+                                <div class="w-full bg-surface-dark h-2 rounded overflow-hidden border border-outline/50">
+                                    <div id="gauge-cpu-bar" class="bg-primary h-full transition-all duration-500 w-0"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-on-surface-variant">RAM ALLOCATION</span>
+                                    <span id="gauge-ram-val" class="text-secondary font-bold">0%</span>
+                                </div>
+                                <div class="w-full bg-surface-dark h-2 rounded overflow-hidden border border-outline/50">
+                                    <div id="gauge-ram-bar" class="bg-secondary h-full transition-all duration-500 w-0"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-on-surface-variant">STORAGE DISK</span>
+                                    <span id="gauge-disk-val" class="text-warning font-bold">42%</span>
+                                </div>
+                                <div class="w-full bg-surface-dark h-2 rounded overflow-hidden border border-outline/50">
+                                    <div id="gauge-disk-bar" class="bg-warning h-full transition-all duration-500 w-[42%]"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Security Status Radar Card -->
+                    <div class="p-3 bg-surface-dark/80 border border-outline rounded font-mono text-xs space-y-2">
+                        <div class="flex items-center justify-between text-primary font-bold">
+                            <span class="flex items-center gap-1.5">
+                                <span class="material-symbols-outlined text-sm">shield</span>
+                                SECURITY_GRID
+                            </span>
+                            <span class="text-emerald-400">ARMED</span>
+                        </div>
+                        <p class="text-[11px] text-on-surface-variant">Intruder detection active. Automated webcam capture monitoring enabled.</p>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Application Script -->
+    <script src="static/js/app.js"></script>
+</body>
+</html>
