@@ -1,22 +1,21 @@
-# JARVIS OS — Mission Control HUD & Autonomous AI Assistant
+# JARVIS OS — Native Mission Control HUD Desktop Application
 
 ![Repository](https://img.shields.io/badge/Jarvis-v4.2-3ed6ff)
 ![Status](https://img.shields.io/badge/Status-Optimal-emerald)
-![UI](https://img.shields.io/badge/Interface-Stitch%20HUD-blueviolet)
+![Interface](https://img.shields.io/badge/Desktop%20UI-Native%20PyQt6%20Stitch%20HUD-blueviolet)
 
-**JARVIS OS** is a high-density, futuristic **Mission Control HUD** and personal AI assistant system inspired by aeronautic Head-Up Displays (HUDs) and Tony Stark's JARVIS interface. It combines a WebGL-powered reactive browser dashboard with a Python backend, system telemetry monitoring, voice recognition, and local desktop automation.
+**JARVIS OS** is a native **PyQt6 desktop application** built with high-density **Stitch Mission Control HUD** aesthetics, inspired by aeronautic Head-Up Displays (HUDs) and Tony Stark's JARVIS interface. It runs completely locally on your system without requiring an external web browser or web server.
 
 ---
 
 ## 🌟 Key Features
 
-- **Stitch HUD Interface**: Single-page web application featuring high-tech glassmorphism aesthetics (`backdrop-blur`), custom HUD layout, and dark-mode styling.
-- **WebGL Background Shader**: Interactive hexagonal grid with drifting ambient particle canvas rendered via native WebGL.
-- **Arc Reactor Visualizer**: Dynamic animated core orb widget representing assistant status states (*Idle*, *Listening*, *Speaking*, *Thinking*).
-- **Live System Telemetry**: Real-time tracking of CPU utilization, RAM allocation, latency, system temperature, and disk storage via `psutil`.
-- **Command Console Feed**: Timestamped terminal logging output with typewriter animations and interactive command execution.
-- **Voice & Speech Engine**: Native browser Web Speech API integration for natural language voice controls.
-- **REST & Local Backend API**: Lightweight Python HTTP server serving telemetry (`/api/status`), handling system commands (`/api/command`), and managing configuration settings (`/api/settings`).
+- **Stitch HUD Design System**: Dark glass aesthetic (`#0e1417` surface-dim), `#3ed6ff` luminous cyan accents, custom dark container panels, and sharp geometric layouts.
+- **Arc Reactor Visualizer**: Native custom-painted segmented HUD orb (`JarvisOrbWidget`) with state animations (*IDLE*, *LISTENING*, *SPEAKING*, *THINKING*).
+- **Top Telemetry Header Bar**: Live system metrics header displaying CPU %, RAM %, Latency, System Temp, and a real-time digital clock.
+- **Side Navigation Protocol Panel**: Direct access to Mission Control tabs (*CHAT TERMINAL*, *DIAGNOSTICS*, *LOGS VAULT*, *SMART NODES*, *SECURITY FEED*, *CONFIG PANEL*).
+- **Interactive Command Console**: Real-time voice and text command processing with timestamped feed output.
+- **Biometric Security Core**: Built-in PIN authorization screen with webcam intruder snapshot logging.
 
 ---
 
@@ -24,60 +23,33 @@
 
 ### Prerequisites
 - Python 3.8+
-- Recommended dependencies: `psutil`, `PyQt6`, `requests`, `pyautogui`, `SpeechRecognition`
+- Required packages: `PyQt6`, `psutil`, `requests`, `pyautogui`, `SpeechRecognition`
 
 ```bash
-pip install psutil PyQt6 requests pyautogui SpeechRecognition
+pip install PyQt6 psutil requests pyautogui SpeechRecognition
 ```
 
-### Launch Modes
+### Running the Application
 
-#### 1. Web HUD Mode (Standalone Server)
-To run the Stitch Mission Control Web HUD interface directly in your web browser:
-```bash
-python server.py
-```
-Open **`http://localhost:8000`** in your browser.
-
-#### 2. Dual Mode (Desktop App + Background Web Server)
-To launch the desktop GUI while running the Web HUD backend server simultaneously:
+Launch the native PyQt6 desktop application directly:
 ```bash
 python jarvis.py
 ```
 
-#### 3. Web HUD Auto-Browser Mode
-To launch the Web server and automatically open the HUD in your default web browser:
-```bash
-python jarvis.py --web
-```
-
 ---
 
-## 🛠 Project Structure
+## 📁 Repository Structure
 
 ```
 Jarvis/
-├── index.html            # Stitch Mission Control HUD Interface (HTML5)
-├── static/
-│   └── js/
-│       └── app.js        # WebGL Shader, Telemetry Client, Orb Visualizer, Terminal JS
-├── server.py             # Python HTTP REST API Server & Static File Server
-├── jarvis.py             # Core Assistant Engine & PyQt6 Desktop Application
-├── jarvis-data/          # System configuration, notes, and intruder snapshots
-│   └── settings.json
+├── jarvis.py             # Core Assistant Engine & Native PyQt6 Stitch HUD Application
+├── jarvis-data/          # Configuration, notes vault, and security intruder snapshots
+│   ├── settings.json
+│   ├── notes/
+│   └── intruders/
 ├── .gitignore
-└── README.md
+└── README.md             # Project documentation
 ```
-
----
-
-## 📜 Available Commands & Protocols
-
-- **`time`** — Displays current system time and date readout.
-- **`status` / `telemetry`** — Provides diagnostic output of CPU and memory stats.
-- **`note <text>`** — Records a timestamped note saved directly to `jarvis-data/notes/`.
-- **`identify`** — Outputs JARVIS system identity statement.
-- **`initialize`** — Executes subsystem module synchronization.
 
 ---
 
