@@ -1,0 +1,12 @@
+{
+    "userName": "Sir",
+    "assistantName": "Jarvis",
+    "securityPin": "1234",
+    "geminiApiKey": "",
+    "smtpServer": "smtp.gmail.com",
+    "smtpUser": "",
+    "twilioSid": "",
+    "twilioToken": "",
+    "twilioFrom": "",
+    "twilioTarget": ""
+}
