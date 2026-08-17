@@ -9,40 +9,89 @@
 
 ---
 
-## 🌟 Key System Capabilities
+## 📸 Actual Application Interface
 
-- **Zero Fake Data**: 100% real application state backed by a persistent SQLite database (`jarvis_production.db`). Empty states are displayed when no user records exist.
-- **Multi-User Authentication & Isolation**: PBKDF2/SHA256 salted password hashing, token-based session management, and per-user data isolation across all database queries and file storage.
-- **Controlled AI Action Registry**: Controlled tool execution system (`command_system.py`) that parses natural language intent into type-checked system operations (creating tasks, scheduling reminders, saving notes, setting memories) without allowing unsafe code execution.
-- **Conversational AI Engine**: Provider abstraction (`ai_service.py`) supporting Gemini API and local intelligent fallbacks, with message persistence and conversation context history in SQLite (`chat_service.py`).
-- **Task & Reminder Scheduler**: Complete task manager (`task_service.py`) and background daemon thread (`reminder_service.py`) that triggers active due reminders and emits notifications.
-- **Notes & Knowledge Vault**: Markdown notes manager (`notes_service.py`) with tag organization and full-text search.
-- **Secure File Vault & Document Indexing**: Per-user file storage (`file_service.py`) with text content extraction and document search.
-- **Controlled Long-Term Memory**: Memory storage engine (`memory_service.py`) allowing users to store, view, delete, and clear explicit personal preferences and workflows.
-- **Global Search Engine**: Unified multi-entity search (`global_search.py`) spanning user messages, tasks, notes, files, and memories.
-- **Native PyQt6 Stitch Mission Control HUD**: Dark glassmorphic desktop interface (`#0e1417` HUD glass, `#3ed6ff` cyan glow), custom-painted Arc Reactor orb visualizer (`JarvisOrbWidget`), live CPU/RAM telemetry badges, digital clock, and protocol controls.
+Below is a screenshot captured directly from the running **JARVIS OS** desktop application:
+
+![JARVIS OS Mission Control HUD (Actual Desktop App)](assets/jarvis_actual_screenshot.png)
 
 ---
 
-## 🛠 System Architecture
+## 🤖 What is JARVIS?
+
+**JARVIS** (Just A Rather Very Intelligent System) is an autonomous, production-grade personal AI operating assistant designed to act as your centralized Mission Control for productivity, information retrieval, task automation, and system intelligence.
+
+Unlike prototype chatbots or UI mockups, **JARVIS OS** is a **fully functional application** backed by a persistent SQLite database (`jarvis_production.db`). Every conversation, task, reminder, note, file record, and memory reflects 100% real application state with strict per-user data isolation.
+
+---
+
+## ⚡ What Can JARVIS Do?
+
+### 1. Conversational AI & Context Persistence
+- **Context-Aware Dialogue**: Maintains conversation context window across interactions. Powered by Google Gemini API with intelligent local fallback engines.
+- **Persistent Chat History**: All messages and conversation threads are saved to SQLite (`chat_service.py`) and remain accessible across application restarts.
+
+### 2. Controlled Action & Intent System
+- **Safe Intent Routing**: Parses natural language requests into structured, type-checked actions (`command_system.py`) rather than executing arbitrary unsafe code.
+- **Natural Language Triggering**: Understands commands such as `"task: submit quarterly report"`, `"remind me to inspect servers tomorrow"`, or `"note: API keys stored in env"`.
+
+### 3. Task Management
+- **Full Task Lifecycle**: Create, edit, complete, delete, search, and list tasks with priority levels (`low`, `medium`, `high`), due dates, and categories (`task_service.py`).
+- **Zero Fake Data**: Displays true database state. If 0 tasks exist, a clean empty state is shown.
+
+### 4. Background Reminder Scheduler & Notifications
+- **Automated Reminder Daemon**: Runs a background scheduler thread (`reminder_service.py`) that monitors due dates and automatically fires alert notifications.
+- **Notification Engine**: Stores unread alerts (`notification_service.py`) with read/unread status tracking.
+
+### 5. Notes & Knowledge Vault
+- **Encrypted Notes Manager**: Create, edit, organize, tag, search, and delete Markdown/text notes (`notes_service.py`).
+- **Natural Language Saving**: Say or type `"note: emergency passcode 9988"` to persist notes instantly.
+
+### 6. Secure File Vault & Document Indexing
+- **Per-User File Isolation**: Isolated storage directory for each user (`jarvis-data/users/<user_id>/files/`).
+- **Document Text Indexing**: Automatically extracts and indexes plain text from uploaded PDF, TXT, MD, PY, and JSON documents (`file_service.py`) for full-text search.
+
+### 7. Web Search & Real-Time Telemetry
+- **Wikipedia Retrieval**: Fetches real-time summary entries with clear source citations (`search_service.py`).
+- **Satellite Weather Telemetry**: Queries Open-Meteo API for real-time weather, humidity, and wind telemetry.
+
+### 8. Controlled Long-Term Memory
+- **Explicit Memory Vault**: Store key-value facts, user preferences, and custom workflows (`memory_service.py`) with controls to view, delete, or clear memories.
+
+### 9. Unified Global Search
+- **Cross-Entity Search**: Search across messages, tasks, notes, uploaded files, and memories simultaneously (`global_search.py`).
+
+### 10. Voice Assistant Engine
+- **Speech-to-Text & Text-to-Speech**: Speech recognition and non-blocking PowerShell speech synthesis (`voice_service.py`) synchronized with the central Arc Reactor visualizer orb.
+
+### 11. Security & Audit Logging
+- **PBKDF2+SHA256 Auth**: Password hashing with unique 16-byte random salts per user (`auth_service.py`).
+- **Biometric & PIN Overlay**: Lock screen modal with security PIN check and webcam intruder snapshot recording.
+- **Comprehensive Audit Logs**: Every command and system operation is logged to `activity_logs` (`security.py`).
+
+---
+
+## 🛠 Project Architecture
 
 ```
 Jarvis/
-├── database.py           # SQLite connection pool, session manager, & schema initialization
-├── models.py             # Database ORM/table models (Users, Sessions, Tasks, Reminders, Notes, Files, etc.)
-├── auth_service.py       # Password hashing (PBKDF2+SHA256), login, registration, & session tokens
-├── ai_service.py         # AI provider abstraction (Gemini / OpenAI / Fallbacks)
-├── chat_service.py       # Conversation & message persistence and search
+├── assets/
+│   └── jarvis_actual_screenshot.png  # Actual native app screenshot
+├── database.py           # SQLite connection pool, session manager, & schema
+├── models.py             # Database ORM/table models
+├── auth_service.py       # Password hashing, user registration, & session tokens
+├── ai_service.py         # AI provider abstraction (Gemini / Local Fallbacks)
+├── chat_service.py       # Conversation & message persistence
 ├── command_system.py     # Controlled AI action registry & intent parser
-├── task_service.py       # Task CRUD, status tracking, and priority levels
+├── task_service.py       # Task CRUD, status tracking, & priority levels
 ├── reminder_service.py   # Reminder scheduling & background daemon thread
 ├── notification_service.py# System notification engine
 ├── notes_service.py      # Encrypted notes vault & full-text search
 ├── file_service.py       # Secure per-user file vault & text indexer
-├── search_service.py     # Wikipedia, Open-Meteo weather API, & web search retrieval
+├── search_service.py     # Wikipedia, weather API, & web search retrieval
 ├── memory_service.py     # Controlled long-term memory engine
 ├── global_search.py      # Unified search across all user entities
-├── security.py           # Input sanitization, path traversal prevention, & audit logging
+├── security.py           # Input sanitization & audit logging
 ├── voice_service.py      # Asynchronous STT/TTS voice engine
 ├── jarvis.py             # Core Assistant Application & PyQt6 Mission Control HUD GUI
 └── jarvis-data/          # SQLite database storage & per-user file directories
@@ -62,18 +111,10 @@ pip install PyQt6 psutil requests pyautogui SpeechRecognition
 
 ### Running the Application
 
-Launch the native desktop application:
+Launch the native desktop application directly:
 ```bash
 python jarvis.py
 ```
-
----
-
-## 🔒 Security & Data Isolation
-
-- **Password Security**: Passwords are hashed using `PBKDF2` with `SHA-256` using 100,000 iterations and a unique 16-byte random salt per user.
-- **Data Isolation**: Every SQL query strictly filters by `user_id = ?`. User A can never query or view User B's conversations, tasks, notes, files, or memories.
-- **Audit Logging**: Every system action and command execution is logged to the `activity_logs` table via `SecurityService.log_activity()`.
 
 ---
 
