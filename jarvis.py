@@ -293,19 +293,35 @@ class SciFiFrame(QFrame):
         painter.drawLine(w - 1, h - 1, w - 1, h - l - 1)
 
 # Main Jarvis Core Logical Controller
+from auth_service import AuthService
+from ai_service import AIService
+from chat_service import ChatService
+from task_service import TaskService
+from reminder_service import ReminderService, start_reminder_scheduler
+from notes_service import NotesService
+from file_service import FileService
+from memory_service import MemoryService
+from search_service import SearchService
+from security import SecurityService
+from command_system import parse_intent_and_execute
+
 class JarvisCore:
     def __init__(self):
+        # Ensure SQLite DB & Default Primary User initialized
+        self.active_user = AuthService.get_or_create_default_user()
+        self.active_user_id = self.active_user["id"]
+        
+        # Ensure active conversation exists
+        self.active_conv = ChatService.get_or_create_active_conversation(self.active_user_id)
+        
+        # Start background reminder scheduler daemon
+        start_reminder_scheduler(interval_sec=10)
+
         self.settings = {
-            "userName": "Sir",
+            "userName": self.active_user.get("username", "Sir"),
             "assistantName": "Jarvis",
-            "securityPin": "1234",
+            "securityPin": self.active_user.get("security_pin", "1234"),
             "geminiApiKey": "",
-            "smtpServer": "smtp.gmail.com",
-            "smtpUser": "",
-            "twilioSid": "",
-            "twilioToken": "",
-            "twilioFrom": "",
-            "twilioTarget": ""
         }
         self.load_settings()
         self.speech_process = None
@@ -329,7 +345,6 @@ class JarvisCore:
     def stop_speaking(self):
         if self.speech_process:
             try:
-                # Terminate powershell and its child synthesis processes on Windows
                 subprocess.run(f"taskkill /F /T /PID {self.speech_process.pid}", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             except Exception:
                 pass
@@ -350,59 +365,51 @@ class JarvisCore:
             return str(e)
 
     def search_web_fallback(self, query):
-        try:
-            # Check for specific IPL test case
-            if "ipl" in query and ("yesterday" in query or "who won" in query):
-                return "RCB won the ipl yesterday, sir."
-                
-            if "rcb" in query and ("troph" in query or "cup" in query or "won" in query):
-                return f"Royal Challengers Bangalore has not won any IPL trophies yet, {self.settings.get('userName', 'sir')}. However, hope springs eternal for the next season."
-                
-            # Wikipedia Search & Summary Fallback API (robust and non-blocking!)
-            url_search = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={requests.utils.quote(query)}&utf8=&format=json"
-            headers = {
-                "User-Agent": "JarvisAssistant/1.0"
-            }
-            res_search = requests.get(url_search, headers=headers, timeout=5).json()
-            search_results = res_search.get("query", {}).get("search", [])
-            
-            if search_results:
-                best_match = search_results[0]
-                title = best_match.get("title")
-                snippet = best_match.get("snippet", "")
-                snippet = re.sub(r'<[^>]*>', '', snippet).strip()
-                snippet = snippet.replace("&quot;", '"').replace("&amp;", "&").replace("&#39;", "'")
-                
-                # Fetch summary for that title
-                url_summary = f"https://en.wikipedia.org/api/rest_v1/page/summary/{requests.utils.quote(title)}"
-                res_sum = requests.get(url_summary, headers=headers, timeout=5).json()
-                if res_sum.get("extract"):
-                    return res_sum["extract"][:400]
-                
-                return f"According to Wikipedia's entry on {title}: {snippet}."
-        except Exception as e:
-            print("Web fallback search error:", e)
-        return f"I processed the search query locally, {self.settings.get('userName', 'sir')}, but found no matching records."
+        return SearchService.web_search(query)
 
     def execute_command(self, command):
-        command = command.lower().strip()
+        command = SecurityService.sanitize_input(command)
+        if not command:
+            return "No command provided."
+
         user_call = self.settings.get("userName", "Sir")
+        SecurityService.log_activity(self.active_user_id, "execute_command", command)
+
+        # 1. Check controlled action registry first
+        handled, action_result = parse_intent_and_execute(self.active_user_id, command)
+        if handled:
+            ChatService.add_message(self.active_user_id, self.active_conv["id"], "user", command)
+            ChatService.add_message(self.active_user_id, self.active_conv["id"], "jarvis", action_result)
+            self.speak(action_result)
+            return action_result
 
         # Stop speaking command
-        if command in ["stop", "shut up", "stop speaking", "quiet", "hush", "stop talking"]:
+        if command.lower() in ["stop", "shut up", "stop speaking", "quiet", "hush", "stop talking"]:
             self.stop_speaking()
             return "Silent standby engaged, sir."
 
-        # Time & Date (Only if explicitly asking for time/date)
-        if command.startswith("what time") or command.startswith("tell me the time") or command == "time":
+        # Time & Date
+        if command.lower().startswith("what time") or command.lower() == "time":
             curr_time = datetime.now().strftime("%I:%M %p")
             reply = f"The current time is {curr_time}, {user_call}."
+            ChatService.add_message(self.active_user_id, self.active_conv["id"], "user", command)
+            ChatService.add_message(self.active_user_id, self.active_conv["id"], "jarvis", reply)
             self.speak(reply)
             return reply
-            
-        elif command.startswith("what date") or command.startswith("today") or command == "date":
+
+        # Weather query
+        if "weather" in command.lower():
+            reply = SearchService.get_weather()
+            ChatService.add_message(self.active_user_id, self.active_conv["id"], "user", command)
+            ChatService.add_message(self.active_user_id, self.active_conv["id"], "jarvis", reply)
+            self.speak(reply)
+            return reply
+
+        elif command.lower().startswith("what date") or command.lower() == "date":
             curr_date = datetime.now().strftime("%A, %B %d, %Y")
             reply = f"Today is {curr_date}, {user_call}."
+            ChatService.add_message(self.active_user_id, self.active_conv["id"], "user", command)
+            ChatService.add_message(self.active_user_id, self.active_conv["id"], "jarvis", reply)
             self.speak(reply)
             return reply
 
@@ -597,32 +604,19 @@ class JarvisCore:
             self.speak(selected)
             return selected
 
-        # Cognitive AI integration (Gemini Key call) - Handles all general questions!
-        apiKey = self.settings.get("geminiApiKey", "")
-        if apiKey:
-            try:
-                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={apiKey}"
-                headers = {"Content-Type": "application/json"}
-                prompt = f"You are J.A.R.V.I.S., a sophisticated, witty, and highly intelligent AI assistant (like Tony Stark's assistant in Iron Man). Answer the user's input with a natural, conversational, human-like voice, while maintaining your signature polite, loyal, and helpful tone. Keep the answer concise. User says: {command}."
-                data = {"contents": [{"parts": [{"text": prompt}]}]}
-                res = requests.post(url, headers=headers, json=data).json()
-                
-                if "candidates" in res and res["candidates"]:
-                    reply = res["candidates"][0]["content"]["parts"][0]["text"].strip()
-                    self.speak(reply)
-                    return reply
-                elif "error" in res:
-                    err_msg = res["error"].get("message", "Unknown Gemini Error")
-                    print("Gemini API Error:", err_msg)
-                    if "API_KEY_INVALID" in err_msg or "not valid" in err_msg.lower():
-                        reply = "Gemini API key verification failed, sir. Please verify your config key details."
-                        self.speak(reply)
-                        return reply
-            except Exception as err:
-                print("Gemini API Connection Error:", err)
+        # AIService Query with Persistent Context
+        context_history = ChatService.get_messages(self.active_user_id, self.active_conv["id"])
+        api_key = self.settings.get("geminiApiKey", "")
+        reply = AIService.generate_response(
+            prompt=command,
+            context_history=context_history,
+            api_key=api_key,
+            assistant_name=self.settings.get("assistantName", "Jarvis"),
+            user_name=user_call
+        )
 
-        # Web search fallback for general questions
-        reply = self.search_web_fallback(command)
+        ChatService.add_message(self.active_user_id, self.active_conv["id"], "user", command)
+        ChatService.add_message(self.active_user_id, self.active_conv["id"], "jarvis", reply)
         self.speak(reply)
         return reply
 
